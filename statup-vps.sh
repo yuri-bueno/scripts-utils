@@ -12,7 +12,7 @@ USER_NAME="${SUDO_USER:-$USER}"  # Usuário que executou o script
 USER_HOME=$(eval echo "~$USER_NAME")
 
 echo -e "${BLUE}==> Atualizando sistema e instalando dependências básicas...${NC}"
-sudo apt update
+sudo apt update && sudo apt upgrade -y
 sudo apt install -y git curl build-essential dkms perl wget htop zsh nginx ca-certificates lsb-release gnupg fonts-powerline
 
 # === ZSH ===
