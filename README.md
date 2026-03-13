@@ -71,7 +71,7 @@ Mostra informações do Git diretamente no prompt:
 - mudanças pendentes
 - status do repositório
 
-### Terminal-Icons
+### eza
 
 Adiciona ícones aos comandos de listagem de arquivos (`ls`).
 
