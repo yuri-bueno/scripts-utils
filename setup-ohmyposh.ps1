@@ -6,7 +6,7 @@ Write-Host ""
 # ------------------------------
 # Preparar PowerShell Gallery
 # ------------------------------
-Write-Host "[0/7] Preparando PowerShell Gallery..." -ForegroundColor Yellow
+Write-Host "[1/6] Preparando PowerShell Gallery..." -ForegroundColor Yellow
 
 try {
     Install-PackageProvider NuGet -Scope CurrentUser -Force -ErrorAction Stop | Out-Null
@@ -18,7 +18,7 @@ Set-PSRepository PSGallery -InstallationPolicy Trusted
 # Atualizar PSReadLine
 # ------------------------------
 Write-Host ""
-Write-Host "[1/7] Atualizando PSReadLine..." -ForegroundColor Yellow
+Write-Host "[2/6] Atualizando PSReadLine..." -ForegroundColor Yellow
 
 Install-Module PSReadLine `
     -Scope CurrentUser `
@@ -27,10 +27,10 @@ Install-Module PSReadLine `
     -AllowClobber
 
 # ------------------------------
-# Verificar Oh My Posh
+# Oh My Posh
 # ------------------------------
 Write-Host ""
-Write-Host "[2/7] Verificando Oh My Posh..." -ForegroundColor Yellow
+Write-Host "[3/6] Verificando Oh My Posh..." -ForegroundColor Yellow
 
 if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
 
@@ -45,10 +45,10 @@ else {
 }
 
 # ------------------------------
-# Verificar Nerd Font
+# Nerd Font
 # ------------------------------
 Write-Host ""
-Write-Host "[3/7] Verificando JetBrainsMono Nerd Font..." -ForegroundColor Yellow
+Write-Host "[4/6] Verificando JetBrainsMono Nerd Font..." -ForegroundColor Yellow
 
 $fontInstalled = Get-ChildItem "C:\Windows\Fonts" | Where-Object { $_.Name -like "*JetBrainsMono*" }
 
@@ -60,86 +60,49 @@ if (-not $fontInstalled) {
         --accept-package-agreements `
         --accept-source-agreements
 }
-else {
-    Write-Host "JetBrainsMono Nerd Font ja instalada." -ForegroundColor Green
-}
 
 # ------------------------------
-# Instalar plugins PowerShell
+# Instalar ferramentas
 # ------------------------------
 Write-Host ""
-Write-Host "[4/7] Instalando plugins PowerShell..." -ForegroundColor Yellow
+Write-Host "[5/6] Verificando ferramentas..." -ForegroundColor Yellow
 
-$plugins = @(
-    "posh-git"
-)
+$tools = @{
+    "zoxide" = "ajeetdsouza.zoxide"
+    "eza"    = "eza-community.eza"
+}
 
-foreach ($plugin in $plugins) {
+foreach ($tool in $tools.Keys) {
 
-    if (-not (Get-Module -ListAvailable -Name $plugin)) {
+    if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
 
-        Write-Host "Instalando $plugin..." -ForegroundColor Green
+        Write-Host "Instalando $tool..." -ForegroundColor Green
 
-        Install-Module $plugin `
-            -Scope CurrentUser `
-            -Repository PSGallery `
-            -Force `
-            -SkipPublisherCheck `
-            -AllowClobber
-    }
-    else {
-        Write-Host "$plugin ja instalado." -ForegroundColor Green
+        winget install $tools[$tool] `
+            --accept-package-agreements `
+            --accept-source-agreements
     }
 }
 
 # ------------------------------
-# Instalar zoxide
+# Criar profile compartilhado
 # ------------------------------
 Write-Host ""
-Write-Host "[5/7] Verificando zoxide..." -ForegroundColor Yellow
+Write-Host "[6/6] Configurando profiles..." -ForegroundColor Yellow
 
-if (-not (Get-Command zoxide -ErrorAction SilentlyContinue)) {
+$sharedProfile = "$HOME\Documents\PowerShell\terminal-profile.ps1"
 
-    Write-Host "Instalando zoxide..." -ForegroundColor Green
-
-    winget install ajeetdsouza.zoxide `
-        --accept-package-agreements `
-        --accept-source-agreements
-}
-else {
-    Write-Host "zoxide ja instalado." -ForegroundColor Green
-}
-
-# ------------------------------
-# Instalar eza
-# ------------------------------
-Write-Host ""
-Write-Host "[6/7] Verificando eza..." -ForegroundColor Yellow
-
-if (-not (Get-Command eza -ErrorAction SilentlyContinue)) {
-
-    Write-Host "Instalando eza..." -ForegroundColor Green
-
-    winget install eza-community.eza `
-        --accept-package-agreements `
-        --accept-source-agreements
-}
-else {
-    Write-Host "eza ja instalado." -ForegroundColor Green
-}
-
-# ------------------------------
-# Configurar profile
-# ------------------------------
-Write-Host ""
-Write-Host "[7/7] Configurando profile..." -ForegroundColor Yellow
-
-$profilePath = "$HOME\Documents\PowerShell\profile.ps1"
-
-$profileContent = @"
+$profileContent = @'
 Import-Module PSReadLine
 
-oh-my-posh init pwsh --config jandedobbeleer | Invoke-Expression
+# cache do oh-my-posh
+$ompCache = "$env:LOCALAPPDATA\ohmyposh-init.ps1"
+
+if (!(Test-Path $ompCache)) {
+    oh-my-posh init pwsh --config jandedobbeleer > $ompCache
+}
+
+. $ompCache
 
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
     Invoke-Expression (& { (zoxide init powershell | Out-String) })
@@ -164,14 +127,28 @@ function ls {
 function ll {
     & eza -la --icons --git --group-directories-first
 }
-"@
+'@
 
-Set-Content $profilePath $profileContent
+Set-Content $sharedProfile $profileContent
 
-Write-Host "Profile configurado." -ForegroundColor Green
+# profiles que vão importar o compartilhado
+$profiles = @(
+    "$HOME\Documents\PowerShell\profile.ps1",
+    "$HOME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+)
+
+foreach ($profile in $profiles) {
+
+    $dir = Split-Path $profile
+
+    if (!(Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+
+    Set-Content $profile ". `"$sharedProfile`""
+}
 
 Write-Host ""
 Write-Host "==================================" -ForegroundColor Cyan
 Write-Host "Setup concluido!" -ForegroundColor Green
-Write-Host "Reabra o terminal para aplicar as configuracoes." -ForegroundColor Cyan
 Write-Host "==================================" -ForegroundColor Cyan
