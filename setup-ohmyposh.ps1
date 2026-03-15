@@ -109,11 +109,11 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
 }
 
 # lazy load git
-function git {
-    Import-Module posh-git
-    Remove-Item function:git
-    git @args
-}
+# function git {
+#     Import-Module posh-git
+#     Remove-Item function:git
+#     git @args
+# } 
 
 # substituir ls padrão
 if (Test-Path alias:ls) {
