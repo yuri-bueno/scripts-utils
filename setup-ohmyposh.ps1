@@ -95,6 +95,29 @@ $sharedProfile = "$HOME\Documents\PowerShell\terminal-profile.ps1"
 $profileContent = @'
 Import-Module PSReadLine
 
+Set-PSReadLineOption -PredictionSource HistoryAndPlugin
+Set-PSReadLineOption -PredictionViewStyle InlineView
+Set-PSReadLineOption -HistorySaveStyle SaveIncrementally
+Set-PSReadLineOption -MaximumHistoryCount 10000
+Set-PSReadLineOption -HistoryNoDuplicates
+
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+Set-PSReadLineKeyHandler -Key Tab -Function Complete
+
+Set-PSReadLineKeyHandler -Key "Ctrl+d" -Function DeleteChar
+Set-PSReadLineKeyHandler -Key "Ctrl+w" -Function BackwardDeleteWord
+Set-PSReadLineKeyHandler -Key "Ctrl+LeftArrow" -Function BackwardWord
+Set-PSReadLineKeyHandler -Key "Ctrl+RightArrow" -Function ForwardWord
+
+Set-PSReadLineOption -Colors @{
+    Command   = 'Cyan'
+    Parameter = 'Yellow'
+    String    = 'Green'
+    Number    = 'Magenta'
+    Operator  = 'Gray'
+}
+
 # cache do oh-my-posh
 $ompCache = "$env:LOCALAPPDATA\ohmyposh-init.ps1"
 
